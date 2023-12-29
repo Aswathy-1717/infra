@@ -1,0 +1,71 @@
+name: Prod  ami building
+
+on:
+  push:
+    branches:
+      - prod
+  workflow_dispatch:
+    inputs:
+      instance_type:
+        type: choice
+        description: "instance_type"
+        options:
+          - t2.micro
+          - t2.small
+      instance_ami:
+        type: string
+        description: "instance ami"
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Terraform Installation
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.6.2"
+
+      - name: Terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.PROD_S3_BUCKET }}" \
+            -backend-config="key=terraform.tfstate" \
+            -backend-config="region=ap-south-1" \
+            -backend-config="access_key=${{ secrets.PROD_AWS_ACCESS_KEY_ID }}" \
+            -backend-config="secret_key=${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}"
+
+      - name: Terraform fmt
+        run: terraform fmt 
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: |
+          terraform plan \
+            -var-file=prod.tfvars \
+            -var "instance_type=${{ github.event.inputs.instance_type }}" \
+            -var "instance_ami=${{ github.event.inputs.instance_ami }}"
+
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.PROD_AWS_REGION }}
+
+      - name: Terraform apply
+        run: |
+          terraform apply \
+            -var-file=prod.tfvars \
+            -var "instance_type=${{ github.event.inputs.instance_type }}" \
+            -var "instance_ami=${{ github.event.inputs.instance_ami }}" \
+            -auto-approve
+
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.PROD_AWS_REGION }}
+
