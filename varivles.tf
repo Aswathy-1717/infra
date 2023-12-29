@@ -12,6 +12,5 @@ variable "hosted_zone_name" {}
 
 variable "hostname" {}  
 
-variable "instance_type" {}
  
 variable "instance_ami" {}
