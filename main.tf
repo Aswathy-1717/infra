@@ -5,10 +5,8 @@ resource "aws_key_pair" "auth_key" {
     Name    = "${var.project_name}-${var.project_env}"
     project = var.project_name
     env     = var.project_env
-  
   }
 }
-
 
 resource "aws_security_group" "frontend" {
   name        = "${var.project_name}-${var.project_env}-frontend"
@@ -30,15 +28,13 @@ resource "aws_security_group" "frontend" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
-
-ingress {
+  ingress {
     from_port   = 9090
     to_port     = 9090
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-
 
   egress {
     from_port   = 22
@@ -55,11 +51,6 @@ ingress {
   }
 }
 
-
-
-
-
-
 resource "aws_instance" "frontend" {
   ami           = var.instance_ami
   instance_type = var.instance_type
@@ -72,9 +63,7 @@ resource "aws_instance" "frontend" {
     Name    = "${var.project_name}-${var.project_env}-frontend"
     project = var.project_name
     env     = var.project_env
-  
   }
-
 }
 
 resource "aws_route53_record" "frontend" {
@@ -84,3 +73,4 @@ resource "aws_route53_record" "frontend" {
   ttl     = 300
   records = [aws_instance.frontend.public_ip]
 }
+
