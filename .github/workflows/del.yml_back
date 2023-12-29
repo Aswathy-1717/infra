@@ -1,0 +1,41 @@
+name: removing infra
+
+on:
+  push: 
+  workflow_dispatch: 
+     
+        
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Terraform Installation
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.6.2"
+
+      - name: Terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.DEV_S3_BUCKET }}" \
+            -backend-config="key=terraform.tfstate" \
+            -backend-config="region=ap-south-1" \
+            -backend-config="access_key=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}" \
+            -backend-config="secret_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}"
+
+      - name: Terraform destroy
+        run: |
+          terraform destroy \
+            -auto-approve \
+            -var "instance_type=${{ github.event.inputs.instance_type }}" \
+            -var "instance_ami=${{ github.event.inputs.instance_ami }}"
+
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.DEV_AWS_REGION }}
+
