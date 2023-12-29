@@ -1,12 +1,21 @@
 name: Dev ami building
 
 on:
-  repository_dispatch:
-    types: [dev-deploy-event]
-
   push:
     branches:
       - dev
+  workflow_dispatch:
+    inputs:
+      instance_type:
+        type: choice
+        description: "instance_type"
+        options:
+          - t2.micro
+          - t2.small
+      instance_ami:
+        type: string
+        description: "instance ami"
+        required: true
 
 jobs:
   build:
@@ -31,22 +40,30 @@ jobs:
 
       - name: Terraform fmt
         run: terraform fmt 
-        
+
       - name: Terraform validate
         run: terraform validate
-        
+
       - name: Terraform plan
-        run: terraform plan -var-file=dev.tfvars
+        run: |
+          terraform plan \
+            -var-file=dev.tfvars \
+            -var "instance_type=${{ github.event.inputs.instance_type }}" \
+            -var "instance_ami=${{ github.event.inputs.instance_ami }}"
+
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.DEV_AWS_REGION }}  
+          AWS_DEFAULT_REGION: ${{ secrets.DEV_AWS_REGION }}
 
       - name: Terraform apply
         run: |
           terraform apply \
-            -auto-approve \
-            -var-file=dev.tfvars
+            -var-file=dev.tfvars \
+            -var "instance_type=${{ github.event.inputs.instance_type }}" \
+            -var "instance_ami=${{ github.event.inputs.instance_ami }}" \
+            -auto-approve
+
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
