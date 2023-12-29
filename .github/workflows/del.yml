@@ -3,7 +3,15 @@ name: removing infra
 on:
   push: 
   workflow_dispatch: 
-    
+    inputs:
+      instance_type:
+        description: 'Instance type for deletion'
+        required: true
+        
+      instance_ami:
+        description: 'Instance AMI for deletion'
+        required: true
+        
 
 jobs:
   build:
