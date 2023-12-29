@@ -1,4 +1,4 @@
-name: Prod  ami building
+name: Prod ami building
 
 on:
   push:
